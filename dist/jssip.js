@@ -71,6 +71,7 @@ var C = {
   REGISTER:   'REGISTER',
   UPDATE:     'UPDATE',
   SUBSCRIBE:  'SUBSCRIBE',
+  REFER:      'REFER',
 
   /* SIP Response Reasons
    * DOC: http://www.iana.org/assignments/sip-parameters
@@ -13662,7 +13663,7 @@ var Dialog = require('./Dialog');
 var RequestSender = require('./RequestSender');
 var RTCSession_Request = require('./RTCSession/Request');
 var RTCSession_DTMF = require('./RTCSession/DTMF');
-
+var Grammar = require('./Grammar');
 
 /**
  * Local variables.
@@ -14505,7 +14506,53 @@ RTCSession.prototype.sendDTMF = function(tones, options) {
     setTimeout(_sendDTMF, timeout);
   }
 };
+RTCSession.prototype.blindTransfer = function (target, options) {
 
+  options = options || {};
+
+  var extraHeaders = (options.extraHeaders || []).slice(),
+    originalTarget = target;
+
+  if (target === undefined) {
+    throw new TypeError('Not enough arguments');
+  }
+
+  // Check Session Status
+  if (this.status !== C.STATUS_CONFIRMED) {
+    throw new Exceptions.InvalidStateError(this.status);
+  }
+
+  try {
+    target = Grammar.parse(target, 'Refer_To').uri || target;
+  } catch (e) {
+    debug('.refer() cannot parse Refer_To from %s', target);
+    debug('...falling through to normalizeTarget()');
+  }
+
+  // Check target validity
+  target = this.ua.normalizeTarget(target);
+  if (!target) {
+    throw new TypeError('Invalid target: ' + originalTarget);
+  }
+
+  extraHeaders.push('Contact: ' + this.contact);
+  extraHeaders.push('Allow: ' + JsSIP_C.ALLOWED_METHODS);
+  extraHeaders.push('Refer-To: ' + target);
+
+  this.dialog.sendRequest({
+
+    receiveResponse: function (response) {
+      if (!/^2[0-9]{2}$/.test(response.status_code)) {
+        return;
+      }
+
+      this.terminate();
+    }.bind(this)
+  }, JsSIP_C.REFER, {
+    extraHeaders: extraHeaders,
+    body: options.body,
+  });
+};
 
 /**
  * Mute
@@ -16124,7 +16171,7 @@ function onunmute(options) {
   });
 }
 
-},{"./Constants":1,"./Dialog":2,"./Exceptions":5,"./Parser":10,"./RTCSession/DTMF":12,"./RTCSession/Request":13,"./RequestSender":15,"./SIPMessage":16,"./Timers":17,"./Transactions":18,"./Utils":22,"debug":29,"events":24,"rtcninja":34,"util":28}],12:[function(require,module,exports){
+},{"./Constants":1,"./Dialog":2,"./Exceptions":5,"./Grammar":6,"./Parser":10,"./RTCSession/DTMF":12,"./RTCSession/Request":13,"./RequestSender":15,"./SIPMessage":16,"./Timers":17,"./Transactions":18,"./Utils":22,"debug":29,"events":24,"rtcninja":34,"util":28}],12:[function(require,module,exports){
 module.exports = DTMF;
 
 
@@ -23661,8 +23708,6 @@ module.exports={
     "shelljs": "^0.5.0",
     "vinyl-source-stream": "^1.1.0"
   },
-  "readme": "# rtcninja.js <img src=\"http://www.pubnub.com/blog/wp-content/uploads/2014/01/google-webrtc-logo.png\" height=\"30\" width=\"30\">\nWebRTC API wrapper to deal with different browsers transparently, [eventually](http://iswebrtcreadyyet.com/) this library shouldn't be needed. We only have to wait until W3C group in charge [finishes the specification](https://tools.ietf.org/wg/rtcweb/) and the different browsers implement it correctly :sweat_smile:.\n\n<img src=\"http://images4.fanpop.com/image/photos/21800000/browser-fight-google-chrome-21865454-600-531.jpg\" height=\"250\" width=\"250\">\n\nSupported environments:\n- [Google Chrome](https://www.google.com/chrome/browser/desktop/index.html) (desktop & mobile)\n- [Google Canary](https://www.google.com/chrome/browser/canary.html) (desktop & mobile)\n- [Mozilla Firefox](https://www.mozilla.org/en-GB/firefox/new) (desktop & mobile)\n- [Firefox Nigthly](https://nightly.mozilla.org/) (desktop & mobile)\n- [Opera](http://www.opera.com/)\n- [Vivaldi](https://vivaldi.com/)\n- [CrossWalk](https://crosswalk-project.org/)\n- [Cordova](cordova.apache.org): iOS support, you only have to use our plugin [following these steps](https://github.com/eface2face/cordova-plugin-iosrtc#usage).\n- [Node-webkit](https://github.com/nwjs/nw.js/)\n\n\n## Installation\n\n### **npm**:\n```bash\n$ npm install rtcninja\n```\n#### Usage\n```javascript\nvar rtcninja = require('rtcninja');\n```\n\n### **bower**:\n```bash\n$ bower install rtcninja\n```\n\n\n## Transpiled library\n\nTake a browserified version of the library from the `dist/` folder:\n\n* `dist/rtcninja-X.Y.Z.js`: The uncompressed version.\n* `dist/rtcninja-X.Y.Z.min.js`: The compressed production-ready version.\n* `dist/rtcninja.js`: A copy of the uncompressed version.\n* `dist/rtcninja.min.js`: A copy of the compressed version.\n\nThey expose the global `window.rtcninja` module.\n\n\n## Usage\n\nIn the [examples](./examples/) folder we provide a complete one.\n\n```javascript\n// Must first call it.\nrtcninja();\n\n// Then check.\nif (rtcninja.hasWebRTC()) {\n    // Do something.\n}\nelse {\n    // Do something.\n}\n```\n\n\n## Documentation\n\nYou can read the full [API documentation](docs/index.md) in the docs folder.\n\n\n## Issues\nhttps://github.com/eface2face/rtcninja.js/issues\n\n\n## Developer guide\n\n- Create a branch with a name including your user and a meaningful word about the fix/feature you're going to implement, ie: \"jesusprubio/fixstuff\"\n- Use [GitHub pull requests](https://help.github.com/articles/using-pull-requests).\n- Conventions:\n - We use [JSHint](http://jshint.com/) and [Crockford's Styleguide](http://javascript.crockford.com/code.html).\n - Please run `grunt lint` to be sure your code fits with them.\n\n### Debugging\n\nThe library includes the Node [debug](https://github.com/visionmedia/debug) module. In order to enable debugging:\n\nIn Node set the `DEBUG=rtcninja*` environment variable before running the application, or set it at the top of the script:\n\n```javascript\nprocess.env.DEBUG = 'rtcninja*';\n```\n\nIn the browser run `rtcninja.debug.enable('rtcninja*');` and reload the page. Note that the debugging settings are stored into the browser LocalStorage. To disable it run `rtcninja.debug.disable('rtcninja*');`.\n\n\n## Copyright & License\n\n* eFace2Face Inc.\n* [MIT](./LICENSE)",
-  "readmeFilename": "README.md",
   "gitHead": "8fba936eb9d38e72dd9c2b79b9cc49ebebcef33a",
   "bugs": {
     "url": "https://github.com/eface2face/rtcninja.js/issues"
@@ -23670,7 +23715,25 @@ module.exports={
   "_id": "rtcninja@0.6.1",
   "scripts": {},
   "_shasum": "4adcdf139d42809db6026138a6f2920fa21b820f",
-  "_from": "rtcninja@>=0.6.1 <0.7.0"
+  "_from": "rtcninja@^0.6.1",
+  "_npmVersion": "2.5.1",
+  "_nodeVersion": "0.12.0",
+  "_npmUser": {
+    "name": "ibc",
+    "email": "ibc@aliax.net"
+  },
+  "dist": {
+    "shasum": "4adcdf139d42809db6026138a6f2920fa21b820f",
+    "tarball": "http://registry.npmjs.org/rtcninja/-/rtcninja-0.6.1.tgz"
+  },
+  "maintainers": [
+    {
+      "name": "ibc",
+      "email": "ibc@aliax.net"
+    }
+  ],
+  "directories": {},
+  "_resolved": "https://registry.npmjs.org/rtcninja/-/rtcninja-0.6.1.tgz"
 }
 
 },{}],39:[function(require,module,exports){
@@ -24246,7 +24309,7 @@ module.exports={
   },
   "_id": "websocket@1.0.19",
   "_shasum": "e62dbf1a3c5e0767425db7187cfa38f921dfb42c",
-  "_from": "websocket@>=1.0.19 <2.0.0",
+  "_from": "websocket@^1.0.19",
   "_npmVersion": "2.10.1",
   "_nodeVersion": "0.12.4",
   "_npmUser": {
