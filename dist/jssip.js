@@ -1,5 +1,5 @@
 /*
- * JsSIP v0.6.33
+ * JsSIP v0.6.34.1
  * the Javascript SIP library
  * Copyright: 2012-2015 José Luis Millán <jmillan@aliax.net> (https://github.com/jmillan)
  * Homepage: http://jssip.net
@@ -22150,13 +22150,10 @@ function Adapter(options) {
 		RTCSessionDescription = pluginiface.RTCSessionDescription;
 		RTCIceCandidate = pluginiface.RTCIceCandidate;
 		MediaStreamTrack = pluginiface.MediaStreamTrack;
-		// TODO: getSources() freezes IE so disable it.
-		if (browser.safari) {
-			if (MediaStreamTrack && MediaStreamTrack.getSources) {
-				getMediaDevices = MediaStreamTrack.getSources.bind(MediaStreamTrack);
-			} else if (virtNavigator.getMediaDevices) {
-				getMediaDevices = virtNavigator.getMediaDevices.bind(virtNavigator);
-			}
+		if (MediaStreamTrack && MediaStreamTrack.getSources) {
+			getMediaDevices = MediaStreamTrack.getSources.bind(MediaStreamTrack);
+		} else if (virtNavigator.getMediaDevices) {
+			getMediaDevices = virtNavigator.getMediaDevices.bind(virtNavigator);
 		}
 		attachMediaStream = pluginiface.attachMediaStream;
 		canRenegotiate = pluginiface.canRenegotiate;
@@ -23661,7 +23658,7 @@ module.exports = require('../package.json').version;
 },{}],38:[function(require,module,exports){
 module.exports={
   "name": "rtcninja",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "WebRTC API wrapper to deal with different browsers",
   "author": {
     "name": "Iñaki Baz Castillo",
@@ -23708,14 +23705,14 @@ module.exports={
     "shelljs": "^0.5.0",
     "vinyl-source-stream": "^1.1.0"
   },
-  "gitHead": "8fba936eb9d38e72dd9c2b79b9cc49ebebcef33a",
+  "gitHead": "9ddf6664289d9ab9da786edcd2f8b61b0633f013",
   "bugs": {
     "url": "https://github.com/eface2face/rtcninja.js/issues"
   },
-  "_id": "rtcninja@0.6.1",
+  "_id": "rtcninja@0.6.2",
   "scripts": {},
-  "_shasum": "4adcdf139d42809db6026138a6f2920fa21b820f",
-  "_from": "rtcninja@^0.6.1",
+  "_shasum": "ac274f4184c64d2d98c1da2cca914a2725dfcf09",
+  "_from": "rtcninja@^0.6.2",
   "_npmVersion": "2.5.1",
   "_nodeVersion": "0.12.0",
   "_npmUser": {
@@ -23723,8 +23720,8 @@ module.exports={
     "email": "ibc@aliax.net"
   },
   "dist": {
-    "shasum": "4adcdf139d42809db6026138a6f2920fa21b820f",
-    "tarball": "http://registry.npmjs.org/rtcninja/-/rtcninja-0.6.1.tgz"
+    "shasum": "ac274f4184c64d2d98c1da2cca914a2725dfcf09",
+    "tarball": "http://registry.npmjs.org/rtcninja/-/rtcninja-0.6.2.tgz"
   },
   "maintainers": [
     {
@@ -23733,7 +23730,7 @@ module.exports={
     }
   ],
   "directories": {},
-  "_resolved": "https://registry.npmjs.org/rtcninja/-/rtcninja-0.6.1.tgz"
+  "_resolved": "https://registry.npmjs.org/rtcninja/-/rtcninja-0.6.2.tgz"
 }
 
 },{}],39:[function(require,module,exports){
@@ -24326,7 +24323,8 @@ module.exports={
     "shasum": "e62dbf1a3c5e0767425db7187cfa38f921dfb42c",
     "tarball": "http://registry.npmjs.org/websocket/-/websocket-1.0.19.tgz"
   },
-  "_resolved": "https://registry.npmjs.org/websocket/-/websocket-1.0.19.tgz"
+  "_resolved": "https://registry.npmjs.org/websocket/-/websocket-1.0.19.tgz",
+  "readme": "ERROR: No README data found!"
 }
 
 },{}],46:[function(require,module,exports){
@@ -24334,7 +24332,7 @@ module.exports={
   "name": "jssip",
   "title": "JsSIP",
   "description": "the Javascript SIP library",
-  "version": "0.6.33",
+  "version": "0.6.34.1",
   "homepage": "http://jssip.net",
   "author": "José Luis Millán <jmillan@aliax.net> (https://github.com/jmillan)",
   "contributors": [
@@ -24360,7 +24358,7 @@ module.exports={
   },
   "dependencies": {
     "debug": "^2.2.0",
-    "rtcninja": "^0.6.1",
+    "rtcninja": "^0.6.2",
     "sdp-transform": "~1.4.0",
     "websocket": "^1.0.19"
   },
